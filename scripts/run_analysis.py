@@ -9,7 +9,7 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from pharmatrace.analytics.anomaly import model_scores, rule_flags, unknown_clusters  # noqa: E402
+from pharmatrace.analytics.anomaly import model_scores, rule_flags, unknown_clusters  
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
     precision = tp / max(len(flagged), 1)
     recall = tp / max(len(truth), 1)
     report = {
-        "units": int(len(known)), "scans": int(len(scans)),
+        "units": len(known), "scans": len(scans),
         "rule_flags": flags.rule.value_counts().to_dict(),
         "model_anomalies": int(scores.is_anomaly.sum()),
         "unknown_clusters": clusters.to_dict(orient="records"),

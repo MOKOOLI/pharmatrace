@@ -3,6 +3,7 @@ import unittest
 
 from pharmatrace.core.security import AuthError, Role, TokenSigner
 from tests.helpers import GTIN, claims, seeded, signer
+from typing import ClassVar
 
 
 class TestBrokenObjectLevelAuth(unittest.TestCase):  # API1:2023 BOLA / IDOR
@@ -60,10 +61,10 @@ class TestBrokenAuthentication(unittest.TestCase):  # API2:2023
 
 
 class TestInjection(unittest.TestCase):  # SQL injection via public endpoint
-    PAYLOADS = ["' OR '1'='1", "x'; DROP TABLE units;--", "\" OR 1=1 --", "%' UNION SELECT * FROM ledger--"]
+    PAYLOADS: ClassVar[list[str]] = ["' OR '1'='1", "x'; DROP TABLE units;--", "\" OR 1=1 --", "%' UNION SELECT * FROM ledger--"]
 
     def test_sqli_payloads_are_inert(self):
-        svc, reg, _, uids = seeded()
+        svc, _, _, uids = seeded()
         for p in self.PAYLOADS:
             self.assertFalse(svc.verify_unit(p).authentic)
         self.assertTrue(svc.verify_unit(uids[0]).authentic)  # tables intact

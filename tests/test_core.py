@@ -26,7 +26,7 @@ class TestPasswords(unittest.TestCase):
 
 class TestLifecycle(unittest.TestCase):
     def test_full_chain_of_custody(self):
-        svc, reg, mfr, uids = seeded()
+        svc, _, mfr, uids = seeded()
         dist = claims(Role.DISTRIBUTOR, "DIST", "d")
         pharm = claims(Role.PHARMACY, "PHARM", "p")
         uid = uids[0]
@@ -45,7 +45,7 @@ class TestLifecycle(unittest.TestCase):
         self.assertIn("counterfeit", fake.warning)
 
     def test_double_dispense_warns(self):
-        svc, reg, mfr, uids = seeded()
+        svc, _, mfr, uids = seeded()
         svc.transfer(mfr, uids[0], "PHARM")
         pharm = claims(Role.PHARMACY, "PHARM")
         svc.dispense(pharm, uids[0])
@@ -54,7 +54,7 @@ class TestLifecycle(unittest.TestCase):
         self.assertIn("already dispensed", svc.verify_unit(uids[0]).warning)
 
     def test_unapproved_drug_blocks_units(self):
-        svc, reg, mfr, _ = seeded()
+        svc, _, mfr, _ = seeded()
         svc.register_drug(mfr, "96385074", "Test")
         with self.assertRaises(DomainError):
             svc.create_units(mfr, "96385074", "L", "2099-01-01", 1)
