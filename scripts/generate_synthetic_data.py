@@ -40,7 +40,7 @@ def generate(n_units: int = 2000, seed: int = 7):
         labels[uid] = "cloned"
 
     # bursts: a reseller repeatedly scanning one genuine code on many fakes
-    for uid in rng.choice([u for u, l in labels.items() if l == "normal"], 15, replace=False):
+    for uid in rng.choice([u for u, lbl in labels.items() if lbl == "normal"], 15, replace=False):
         t = t0 + rng.uniform(0, 30 * 86400)
         lat, lon = CITIES[names[rng.integers(len(names))]]
         for k in range(int(rng.integers(8, 20))):
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     ap.add_argument("--units", type=int, default=2000)
     a = ap.parse_args()
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
-    s, l = generate(a.units)
+    s, lbl = generate(a.units)
     s.to_csv(a.out, index=False)
-    l.to_csv(a.out.replace(".csv", "_labels.csv"), index=False)
-    print(f"wrote {len(s)} scans for {len(l)} units -> {a.out}")
+    lbl.to_csv(a.out.replace(".csv", "_labels.csv"), index=False)
+    print(f"wrote {len(s)} scans for {len(lbl)} units -> {a.out}")
