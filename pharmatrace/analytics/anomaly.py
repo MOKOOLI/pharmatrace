@@ -9,7 +9,6 @@ Two layers:
 """
 from __future__ import annotations
 
-
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest

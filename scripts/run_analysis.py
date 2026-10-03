@@ -9,7 +9,7 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from pharmatrace.analytics.anomaly import model_scores, rule_flags, unknown_clusters  
+from pharmatrace.analytics.anomaly import model_scores, rule_flags, unknown_clusters
 
 
 def main():

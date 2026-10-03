@@ -26,7 +26,7 @@ class TestPasswords(unittest.TestCase):
 
 class TestLifecycle(unittest.TestCase):
     def test_full_chain_of_custody(self):
-        svc, _, mfr, uids = seeded()
+        svc, reg, mfr, uids = seeded()
         dist = claims(Role.DISTRIBUTOR, "DIST", "d")
         pharm = claims(Role.PHARMACY, "PHARM", "p")
         uid = uids[0]

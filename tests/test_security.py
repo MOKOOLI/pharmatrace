@@ -1,9 +1,9 @@
 """Security regression suite: each test maps to an OWASP API Top 10 risk."""
 import unittest
+from typing import ClassVar
 
 from pharmatrace.core.security import AuthError, Role, TokenSigner
 from tests.helpers import GTIN, claims, seeded, signer
-from typing import ClassVar
 
 
 class TestBrokenObjectLevelAuth(unittest.TestCase):  # API1:2023 BOLA / IDOR
