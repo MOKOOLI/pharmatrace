@@ -35,7 +35,8 @@ class TestBrokenAuthentication(unittest.TestCase):  # API2:2023
     def test_tampered_token_rejected(self):
         tok = signer.issue("u", Role.PHARMACY, "P")
         body, sig = tok.split(".")
-        import base64, json
+        import base64
+        import json
         payload = json.loads(base64.urlsafe_b64decode(body + "=="))
         payload["role"] = "regulator"  # privilege escalation attempt
         forged = base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()

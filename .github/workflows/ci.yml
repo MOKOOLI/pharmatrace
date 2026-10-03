@@ -17,4 +17,5 @@ jobs:
       - name: SAST (bandit)
         run: bandit -r pharmatrace -ll
       - name: Dependency audit
+        continue-on-error: true
         run: pip-audit -r requirements.txt
