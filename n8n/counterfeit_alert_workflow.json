@@ -1,0 +1,89 @@
+{
+  "name": "PharmaTrace - Counterfeit Alert",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "hours", "hoursInterval": 1}]}},
+      "id": "a1", "name": "Every hour", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PHARMATRACE_URL }}/analytics/report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {"timeout": 30000}
+      },
+      "id": "a2", "name": "Get anomaly report", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
+      "position": [220, 300],
+      "credentials": {"httpHeaderAuth": {"id": "REPLACE_ME", "name": "PharmaTrace Regulator Token"}}
+    },
+    {
+      "parameters": {
+        "conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"id": "c1", "leftValue": "={{ $json.alerts }}", "rightValue": 0,
+            "operator": {"type": "number", "operation": "gt"}}], "combinator": "and"}
+      },
+      "id": "a3", "name": "Any alerts?", "type": "n8n-nodes-base.if", "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst lines = [];\nlines.push(`*PharmaTrace alert* : ${r.alerts} signal(s)`);\nfor (const f of r.rule_flags.slice(0, 10)) lines.push(`- ${f.rule}: \\`${f.uid}\\` (${f.detail})`);\nfor (const c of r.counterfeit_clusters) lines.push(`- counterfeit cluster @ ${c.cell}: ${c.unknown_scans} unknown serials`);\nif (r.model_suspects.length) lines.push(`- ML suspects: ${r.model_suspects.length}`);\nreturn [{ json: { text: lines.join('\\n'), severity: r.counterfeit_clusters.length ? 'high' : 'medium' } }];"
+      },
+      "id": "a4", "name": "Format message", "type": "n8n-nodes-base.code", "typeVersion": 2,
+      "position": [660, 220]
+    },
+    {
+      "parameters": {"chatId": "={{ $env.TELEGRAM_CHAT_ID }}", "text": "={{ $json.text }}",
+        "additionalFields": {"parse_mode": "Markdown"}},
+      "id": "a5", "name": "Telegram", "type": "n8n-nodes-base.telegram", "typeVersion": 1.2,
+      "position": [880, 140],
+      "credentials": {"telegramApi": {"id": "REPLACE_ME", "name": "Telegram Bot"}}
+    },
+    {
+      "parameters": {"fromEmail": "alerts@pharmatrace.local", "toEmail": "={{ $env.REGULATOR_EMAIL }}",
+        "subject": "=[{{ $json.severity }}] PharmaTrace counterfeit alert", "emailFormat": "text",
+        "text": "={{ $json.text }}"},
+      "id": "a6", "name": "Email regulator", "type": "n8n-nodes-base.emailSend", "typeVersion": 2.1,
+      "position": [880, 300],
+      "credentials": {"smtp": {"id": "REPLACE_ME", "name": "SMTP"}}
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PHARMATRACE_URL }}/ledger/verify",
+        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "options": {}
+      },
+      "id": "a7", "name": "Verify ledger integrity", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
+      "position": [440, 480],
+      "credentials": {"httpHeaderAuth": {"id": "REPLACE_ME", "name": "PharmaTrace Regulator Token"}}
+    },
+    {
+      "parameters": {
+        "conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"id": "c2", "leftValue": "={{ $json.ok }}", "rightValue": false,
+            "operator": {"type": "boolean", "operation": "equals"}}], "combinator": "and"}
+      },
+      "id": "a8", "name": "Ledger tampered?", "type": "n8n-nodes-base.if", "typeVersion": 2,
+      "position": [660, 480]
+    },
+    {
+      "parameters": {"chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=CRITICAL: ledger integrity broken at seq {{ $json.broken_at }} ({{ $json.reason }})", "additionalFields": {}},
+      "id": "a9", "name": "Telegram CRITICAL", "type": "n8n-nodes-base.telegram", "typeVersion": 1.2,
+      "position": [880, 480],
+      "credentials": {"telegramApi": {"id": "REPLACE_ME", "name": "Telegram Bot"}}
+    }
+  ],
+  "connections": {
+    "Every hour": {"main": [[{"node": "Get anomaly report", "type": "main", "index": 0},
+                             {"node": "Verify ledger integrity", "type": "main", "index": 0}]]},
+    "Get anomaly report": {"main": [[{"node": "Any alerts?", "type": "main", "index": 0}]]},
+    "Any alerts?": {"main": [[{"node": "Format message", "type": "main", "index": 0}], []]},
+    "Format message": {"main": [[{"node": "Telegram", "type": "main", "index": 0},
+                                 {"node": "Email regulator", "type": "main", "index": 0}]]},
+    "Verify ledger integrity": {"main": [[{"node": "Ledger tampered?", "type": "main", "index": 0}]]},
+    "Ledger tampered?": {"main": [[{"node": "Telegram CRITICAL", "type": "main", "index": 0}], []]}
+  },
+  "settings": {"executionOrder": "v1"},
+  "active": false
+}
